@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    build:
+      context: ./services/api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - ENVIRONMENT=development
+    networks:
+      - the82-network
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: the82
+      POSTGRES_PASSWORD: the82_dev_password
+      POSTGRES_DB: the82_logistics
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - the82-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - the82-network
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+    depends_on:
+      - api-gateway
+    networks:
+      - the82-network
+
+volumes:
+  postgres_data:
+
+networks:
+  the82-network:
+    driver: bridge
